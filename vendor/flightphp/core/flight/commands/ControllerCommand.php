@@ -26,19 +26,11 @@ class ControllerCommand extends AbstractBaseCommand
      *
      * @return void
      */
-    public function execute(string $controller): void
+    public function execute(string $controller)
     {
         $io = $this->app()->io();
-
-        if (empty($this->config['runway'])) {
-            $io->warn('Using a .runway-config.json file is deprecated. Move your config values to app/config/config.php with `php runway config:migrate`.', true); // @codeCoverageIgnore
-            $runwayConfig = json_decode(file_get_contents($this->projectRoot . '/.runway-config.json'), true); // @codeCoverageIgnore
-        } else {
-            $runwayConfig = $this->config['runway'];
-        }
-
-        if (isset($runwayConfig['app_root']) === false) {
-            $io->error('app_root not set in app/config/config.php', true);
+        if (isset($this->config['app_root']) === false) {
+            $io->error('app_root not set in .runway-config.json', true);
             return;
         }
 
@@ -46,7 +38,7 @@ class ControllerCommand extends AbstractBaseCommand
             $controller .= 'Controller';
         }
 
-        $controllerPath = $this->projectRoot . '/' . $runwayConfig['app_root'] . 'controllers/' . $controller . '.php';
+        $controllerPath = getcwd() . DIRECTORY_SEPARATOR . $this->config['app_root'] . 'controllers' . DIRECTORY_SEPARATOR . $controller . '.php';
         if (file_exists($controllerPath) === true) {
             $io->error($controller . ' already exists.', true);
             return;
@@ -78,7 +70,7 @@ class ControllerCommand extends AbstractBaseCommand
         $namespace->add($class);
         $file->addNamespace($namespace);
 
-        $this->persistClass($controller, $file, $runwayConfig['app_root']);
+        $this->persistClass($controller, $file);
 
         $io->ok('Controller successfully created at ' . $controllerPath, true);
     }
@@ -88,13 +80,12 @@ class ControllerCommand extends AbstractBaseCommand
      *
      * @param string    $controllerName  Name of the Controller
      * @param PhpFile   $file            Class Object from Nette\PhpGenerator
-     * @param string    $appRoot         App Root from runway config
      *
      * @return void
      */
-    protected function persistClass(string $controllerName, PhpFile $file, string $appRoot)
+    protected function persistClass(string $controllerName, PhpFile $file)
     {
         $printer = new \Nette\PhpGenerator\PsrPrinter();
-        file_put_contents($this->projectRoot . '/' . $appRoot . 'controllers/' . $controllerName . '.php', $printer->printFile($file));
+        file_put_contents(getcwd() . DIRECTORY_SEPARATOR . $this->config['app_root'] . 'controllers' . DIRECTORY_SEPARATOR . $controllerName . '.php', $printer->printFile($file));
     }
 }

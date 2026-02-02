@@ -37,25 +37,20 @@ class RouteCommand extends AbstractBaseCommand
      *
      * @return void
      */
-    public function execute(): void
+    public function execute()
     {
         $io = $this->app()->io();
 
-        if (empty($this->config['runway'])) {
-            $io->warn('Using a .runway-config.json file is deprecated. Move your config values to app/config/config.php with `php runway config:migrate`.', true); // @codeCoverageIgnore
-            $runwayConfig = json_decode(file_get_contents($this->projectRoot . '/.runway-config.json'), true); // @codeCoverageIgnore
-        } else {
-            $runwayConfig = $this->config['runway'];
-        }
-
-        if (isset($runwayConfig['index_root']) === false) {
-            $io->error('index_root not set in app/config/config.php', true);
+        if (isset($this->config['index_root']) === false) {
+            $io->error('index_root not set in .runway-config.json', true);
             return;
         }
 
         $io->bold('Routes', true);
 
-        $index_root = $this->projectRoot . '/' . $runwayConfig['index_root'];
+        $cwd = getcwd();
+
+        $index_root = $cwd . '/' . $this->config['index_root'];
 
         // This makes it so the framework doesn't actually execute
         Flight::map('start', function () {
@@ -70,15 +65,11 @@ class RouteCommand extends AbstractBaseCommand
                 if (!empty($route->middleware)) {
                     try {
                         $middlewares = array_map(function ($middleware) {
-                            if (is_string($middleware)) {
-                                $middleware_class_name = explode("\\", $middleware);
-                            } else {
-                                $middleware_class_name = explode("\\", get_class($middleware));
-                            }
+                            $middleware_class_name = explode("\\", get_class($middleware));
                             return preg_match("/^class@anonymous/", end($middleware_class_name)) ? 'Anonymous' : end($middleware_class_name);
                         }, $route->middleware);
-                    } catch (\TypeError $e) { // @codeCoverageIgnore
-                        $middlewares[] = 'Bad Middleware'; // @codeCoverageIgnore
+                    } catch (\TypeError $e) {
+                        $middlewares[] = 'Bad Middleware';
                     } finally {
                         if (is_string($route->middleware) === true) {
                             $middlewares[] = $route->middleware;

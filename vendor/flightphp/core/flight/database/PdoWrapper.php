@@ -9,9 +9,6 @@ use flight\util\Collection;
 use PDO;
 use PDOStatement;
 
-/**
- * @deprecated version 3.18.0 - Use SimplePdo instead
- */
 class PdoWrapper extends PDO
 {
     /** @var bool $trackApmQueries Whether to track application performance metrics (APM) for queries. */

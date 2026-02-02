@@ -1,15 +1,17 @@
 <?php
 
-require_once __DIR__ . '/../models/User.php';
+namespace app\repositories;
+use app\models;
 
+use PDO;
 class UserRepository {
   private $pdo;
-  public function __construct(PDO $pdo) { $this->pdo = $pdo; }
+  public function __construct($pdo) { $this->pdo = $pdo; }
 
   public function findById($id) {
     $stmt = $this->pdo->prepare("SELECT * FROM users WHERE id = :id");
     $stmt->execute(['id' => $id]);
-    return new User($stmt->fetch());
+    return $stmt->fetch(PDO::FETCH_ASSOC);
   }
 
   public function findAll() {
