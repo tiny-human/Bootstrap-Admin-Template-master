@@ -8,8 +8,13 @@ use app\controllers\MessageController;
 Flight::route('GET /', function(){
     $index = new IndexController();
     $index->showIndex();
-    
 });
+
+ $router->get('/test', function () {
+        $db = Flight::db();
+        var_dump($db->query("SELECT version()")->fetch());
+});
+
 Flight::route('GET /messages', function(){
     $message = new MessageController();
     $message->showMessages();
