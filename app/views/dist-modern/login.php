@@ -47,54 +47,17 @@
                                     <span class="input-group-text"><i class="bi bi-person"></i></span>
                                     <input type="text"
                                         class="form-control"
-                                        x-model="form.username"
-                                        @input="validateField('username')"
-                                        :class="getFieldClass('username')"
+                                        x-model="form.nom"
                                         placeholder="Enter username"
                                         name="nom"
-                                        required>
+                                        id="nom"
+                                        >
                                 </div>
-                                <div class="invalid-feedback"
-                                    x-show="errors.username"
-                                    x-text="errors.username"></div>
-                            </div>
+                                <div id="nomError" class="invalid-feedback"></div>
+                            </div>               
 
-                            <div class="col-md-6">
-                                <label class="form-label">Email</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                                    <input type="email"
-                                        class="form-control"
-                                        x-model="form.email"
-                                        @input="validateField('email')"
-                                        :class="getFieldClass('email')"
-                                        placeholder="Enter email"
-                                        name="email"
-                                        required>
-
-                                </div>
-                                <div class="invalid-feedback"
-                                    x-show="errors.email"
-                                    x-text="errors.email"></div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Password</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                                    <input
-                                        :type="showPassword ? 'text' : 'password'"
-                                        class="form-control"
-                                        x-model="form.password"
-                                        @input="validatePassword()"
-                                        :class="getFieldClass('password')"
-                                        placeholder="Enter password"
-                                        name="mdp"
-                                        required>
-                                </div>
-                                <div class="invalid-feedback" x-show="errors.password" x-text="errors.password"></div>
-
-                            </div>
-                            <div class="col-md-6"></div>
 
                             <div class="col-12">
                                 <div class="form-check">
@@ -120,11 +83,12 @@
                             </div>
                         </div>
                     </form>
+                        <script src="/js/validation-ajax.js" defer></script>
+
                 </div>
             </div>
         </div>
     </div>
-
 
 
 </body>

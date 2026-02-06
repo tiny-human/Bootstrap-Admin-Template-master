@@ -2,14 +2,14 @@
 namespace app\controllers;
 
 use app\repositories\UserRepository;
-use app\Services\Validator;
-use app\Services\UserService;
+use app\services\Validator;
+use app\services\UserService;
 use Flight;
 class AuthController {
   public static function showRegister() {
     Flight::render('auth/register', [
-      'values' => ['nom'=>'','prenom'=>''],
-      'errors' => ['nom'=>'','prenom'=>''],
+      'values' => ['nom'=>'','email'=>'','mdp'=>''],
+      'errors' => ['nom'=>'','email'=>'','mdp'=>''],
       'success' => false
     ]);
   }
@@ -24,7 +24,6 @@ class AuthController {
 
       $input = [
         'nom' => $req->data->nom,
-        'prenom' => $req->data->prenom,
       ];
 
       $res = Validator::validateRegister($input, $repo);
@@ -53,15 +52,14 @@ class AuthController {
 
     $input = [
       'nom' => $req->data->nom,
-      'prenom' => $req->data->prenom,
     ];
 
     $res = Validator::validateRegister($input, $repo);
 
     if ($res['ok']) {
-      $svc->register($res['values'], (string)$input['password']);
+      $svc->register($res['values']);
       Flight::render('auth/register', [
-        'values' => ['nom'=>'','prenom'=>''],
+        'values' => ['nom'=>''],
         'success' => true
       ]);
       return;

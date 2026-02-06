@@ -1,11 +1,11 @@
+
+drop database boot;
 CREATE DATABASE IF NOT EXISTS boot;
 USE boot;
 
 CREATE TABLE IF NOT EXISTS user(
     id_utilisateur INT PRIMARY KEY AUTO_INCREMENT,
-    nom VARCHAR(75) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    mdp VARCHAR(100)
+    nom VARCHAR(75) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS etat_message(

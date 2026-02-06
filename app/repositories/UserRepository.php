@@ -26,31 +26,35 @@ class UserRepository {
 
   }
   
-  public function verifyUser($email, $nom, $mdp) {
-    $sql = "SELECT * FROM user WHERE email = ?";
+  public function verifyUser( $nom) {
+    $sql = "SELECT * FROM user WHERE nom = ?";
     $stmt = $this->pdo->prepare($sql);
-    $stmt->execute([$email]);
+    $stmt->execute([$nom]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (empty($user)) {
-      $hash = password_hash($mdp, PASSWORD_DEFAULT);
-      $this->createAndRedirect($nom, $email, $hash);
+      $this->create($nom);
       return true;
     }
-    
-    return password_verify($mdp, $user['mdp']);
+    return true;
   }
+
   public function findAll() {
     $stmt = $this->pdo->query("SELECT * FROM users");
     return $stmt->fetchAll(PDO::FETCH_CLASS, 'User');
   }
-  public function createAndRedirect($nom,$email,$hash_mdp){
-    $sql = "INSERT INTO user(nom,email,mdp) VALUES(?,?,?)";
+  
+  public function create($nom){
+    $sql = "INSERT INTO user(nom) VALUES(?)";
     $stmt = $this->pdo->prepare($sql);
-    $stmt->execute([$nom,$email,$hash_mdp]);
+    $stmt->execute([$nom]);
     session_start();
     $_SESSION['user'] = $nom;
-    Flight::redirect('/home');
   }
 
+  public function findByName($nom) {
+    $stmt = $this->pdo->prepare("SELECT * FROM user WHERE nom = :nom");
+    $stmt->execute(['nom' => $nom]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+  }
 }

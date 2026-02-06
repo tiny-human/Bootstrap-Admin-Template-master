@@ -1,12 +1,11 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const form = document.querySelector("#registerForm");
+  const form = document.querySelector("form[action='/register']");
   if (!form) return;
 
   const statusBox = document.querySelector("#formStatus");
 
   const map = {
-    nom: { input: "#nom", err: "#nomError" },
-    prenom: { input: "#prenom", err: "#prenomError" },
+    nom: { input: "#nom", err: "#nomError" }
   };
 
   function setStatus(type, msg) {
@@ -25,7 +24,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const input = document.querySelector(map[k].input);
       const err = document.querySelector(map[k].err);
       input.classList.remove("is-invalid", "is-valid");
-      if (err) err.textContent = "";
+      if (err) {
+        err.textContent = "";
+        err.classList.remove("d-block");
+      }
     });
     setStatus(null, "");
   }
@@ -40,11 +42,17 @@ document.addEventListener("DOMContentLoaded", () => {
       if (msg) {
         input.classList.add("is-invalid");
         input.classList.remove("is-valid");
-        if (err) err.textContent = msg;
+        if (err) {
+          err.textContent = msg;
+          err.classList.add("d-block");
+        }
       } else {
         input.classList.remove("is-invalid");
         input.classList.add("is-valid");
-        if (err) err.textContent = "";
+        if (err) {
+          err.textContent = "";
+          err.classList.remove("d-block");
+        }
       }
     });
 

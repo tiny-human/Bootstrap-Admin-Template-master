@@ -4,6 +4,7 @@ use Flight;
 use app\controllers\IndexController;
 use app\controllers\MessageController;
 use app\controllers\UserController;
+use app\controllers\AuthController;
 
 use app\models\User;
 
@@ -34,10 +35,15 @@ $router->post('/register' , function(){
     $usercontroller->register();
 });
 
+$router ->post('/api/validate/register', function(){
+    $auth = new AuthController();
+    $auth->validateRegisterAjax();
+});
+
 
 
 // Flight::route('POST /register', ['AuthController', 'postRegister']);
-// Flight::route('POST /api/validate/register', ['AuthController', 'validateRegisterAjax']);
+//Flight::route('POST /api/validate/register', ['AuthController', 'validateRegisterAjax']);
 // Flight::route('GET /login', ['AuthController', 'showLogin']);
 // Flight::route('POST /login', ['AuthController', 'postLogin']);
 // Flight::route('POST /api/validate/login', ['AuthController', 'validateLoginAjax']);
