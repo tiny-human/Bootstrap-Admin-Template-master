@@ -2,7 +2,7 @@
 
 namespace app\repositories;
 use app\models;
-
+use Flight;
 use PDO;
 
 
@@ -16,30 +16,41 @@ class UserRepository {
     return $stmt->fetch(PDO::FETCH_ASSOC);
   }
 
-  public function verifyUser($email,$nom,$mdp){
+  public function getHash($email){
+    $sql = "SELECT mdp FROM user WHERE email = ?";
+    $stmt = $this->pdo->prepare($sql);
+    $stmt->execute([$email]);
+    $mdp = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $mdp['mdp'];
+
+
+  }
+  
+  public function verifyUser($email, $nom, $mdp) {
     $sql = "SELECT * FROM user WHERE email = ?";
     $stmt = $this->pdo->prepare($sql);
     $stmt->execute([$email]);
-    $user = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    if(empty($users)){
-      $sql2 = "INSERT INTO user(nom,email,mdp) VALUES(?,?,?)";
-      $stmt2 = $this->pdo->prepare($sql);
-      $stmt2->execute([$nom,$email,$mdp]);
-
-      
-    }
-
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
     
-
+    if (empty($user)) {
+      $hash = password_hash($mdp, PASSWORD_DEFAULT);
+      $this->createAndRedirect($nom, $email, $hash);
+      return true;
+    }
+    
+    return password_verify($mdp, $user['mdp']);
   }
   public function findAll() {
     $stmt = $this->pdo->query("SELECT * FROM users");
     return $stmt->fetchAll(PDO::FETCH_CLASS, 'User');
   }
-  // public function create($nom,$email){
-  //   $sql = "INSERT INTO user(nom,email) VALUES(?,?)";
-  //   $stmt = $this->pdo->prepare($sql);
-  //   $stmt->execute([$nom,$email]);
-  // }
+  public function createAndRedirect($nom,$email,$hash_mdp){
+    $sql = "INSERT INTO user(nom,email,mdp) VALUES(?,?,?)";
+    $stmt = $this->pdo->prepare($sql);
+    $stmt->execute([$nom,$email,$hash_mdp]);
+    session_start();
+    $_SESSION['user'] = $nom;
+    Flight::redirect('/home');
+  }
 
 }

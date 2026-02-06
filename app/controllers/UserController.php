@@ -16,9 +16,13 @@ class UserController
         $db = Flight::db();
         $nom = $_POST['nom'];
         $email = $_POST['email'];
+        $mdp = $_POST['mdp'];
         $userRepository = new UserRepository($db);
-        $userRepository->create($nom,$email);
-        session_start();
-        $_SESSION['user'] = $nom;
+        if(!$userRepository->verifyUser($email,$nom,$mdp)){
+            Flight::redirect('/login?erreur=1');
+        }
+        else{
+            Flight::redirect('/home');
+        }
     }
 }

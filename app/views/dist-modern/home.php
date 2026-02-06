@@ -1,3 +1,6 @@
+<?php
+session_start();
+?>
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="light">
 <head>
@@ -150,7 +153,7 @@
                                      width="24" 
                                      height="24" 
                                      class="rounded-circle me-2">
-                                <span class="d-none d-md-inline">John Doe</span>
+                                <span class="d-none d-md-inline"><?=  $_SESSION['user'] ?> </span>
                                 <i class="bi bi-chevron-down ms-1"></i>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end">

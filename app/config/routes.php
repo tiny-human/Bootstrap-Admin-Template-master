@@ -7,7 +7,7 @@ use app\controllers\UserController;
 
 use app\models\User;
 
-Flight::route('GET /', function(){
+Flight::route('GET /home', function(){
     $index = new IndexController();
     $index->showIndex();
 });
@@ -19,10 +19,9 @@ Flight::route('GET /', function(){
 
  $router->get('/forms', function () {
      Flight::render('dist-modern/forms');
-        
 });
 //mapiseo formulaire
- $router->get('/login', function () {
+ $router->get('/', function () {
        Flight::render('dist-modern/login');
 });
 
@@ -30,8 +29,10 @@ Flight::route('GET /messages', function(){
     $message = new MessageController();
     $message->showMessages();
 });
-//miditra anaty base de mamorona session
-Flight::route('POST /register', ['UserController', 'register']);
+$router->post('/register' , function(){
+    $usercontroller = new UserController();
+    $usercontroller->register();
+});
 
 
 
