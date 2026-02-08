@@ -30,6 +30,49 @@ Flight::route('GET /messages', function(){
     $message = new MessageController();
     $message->showMessages();
 });
+
+Flight::route('POST /messages/send', function(){
+    $message = new MessageController();
+    $message->sendMessageForm();
+});
+
+// Récupérer la liste des conversations
+Flight::route('GET /api/messages/conversations', function(){
+    $controller = new MessageController();
+    $controller->getConversations();
+});
+
+// Récupérer les messages d'une conversation avec un utilisateur
+Flight::route('GET /api/messages/@userId', function($userId){
+    $controller = new MessageController();
+    $controller->getMessages($userId);
+});
+
+// Envoyer un message
+Flight::route('POST /api/messages/send', function(){
+    $controller = new MessageController();
+    $controller->sendMessage();
+});
+
+// Récupérer la liste des utilisateurs
+Flight::route('GET /api/users', function(){
+    $controller = new MessageController();
+    $controller->getUsers();
+});
+
+// Marquer les messages comme lus
+Flight::route('POST /api/messages/read/@senderId', function($senderId){
+    $controller = new MessageController();
+    $controller->markAsRead($senderId);
+});
+
+// Compter les messages non lus
+Flight::route('GET /api/messages/unread/count', function(){
+    $controller = new MessageController();
+    $controller->getUnreadCount();
+});
+
+
 $router->post('/register' , function(){
     $usercontroller = new UserController();
     $usercontroller->register();

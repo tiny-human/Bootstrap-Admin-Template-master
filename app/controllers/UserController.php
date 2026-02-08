@@ -40,8 +40,11 @@ class UserController
             return;
         }
 
-        if ($repo->verifyUser($nom)) {
-            $_SESSION['user'] = $nom;
+        $userId = $repo->verifyUser($nom);
+        if ($userId) {
+            if (!isset($_SESSION['user_id'])) {
+                $_SESSION['user_id'] = $userId;
+            }
             Flight::render('dist-modern/home', [
                 'values' => ['nom' => $nom],
                 'success' => true

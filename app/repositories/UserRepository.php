@@ -11,7 +11,7 @@ class UserRepository {
   public function __construct($pdo) { $this->pdo = $pdo; }
 
   public function findById($id) {
-    $stmt = $this->pdo->prepare("SELECT * FROM users WHERE id = :id");
+    $stmt = $this->pdo->prepare("SELECT * FROM user WHERE id = :id");
     $stmt->execute(['id' => $id]);
     return $stmt->fetch(PDO::FETCH_ASSOC);
   }
@@ -22,8 +22,6 @@ class UserRepository {
     $stmt->execute([$email]);
     $mdp = $stmt->fetch(PDO::FETCH_ASSOC);
     return $mdp['mdp'];
-
-
   }
   
   public function verifyUser( $nom) {
@@ -33,23 +31,40 @@ class UserRepository {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (empty($user)) {
-      $this->create($nom);
-      return true;
+      return $this->create($nom);
     }
-    return true;
+    
+    // Utilisateur existe, définir la session
+    if (session_status() === PHP_SESSION_NONE) {
+      session_start();
+    }
+    $_SESSION['user'] = $user['nom'];
+    $_SESSION['user_id'] = $user['id'];
+    
+    return $user['id'];
   }
 
-  public function findAll() {
-    $stmt = $this->pdo->query("SELECT * FROM users");
-    return $stmt->fetchAll(PDO::FETCH_CLASS, 'User');
+  public static function findAll() {
+    $sql = "SELECT * FROM user";
+    $stmt = Flight::db()->query($sql);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+  
   }
   
   public function create($nom){
     $sql = "INSERT INTO user(nom) VALUES(?)";
     $stmt = $this->pdo->prepare($sql);
     $stmt->execute([$nom]);
-    session_start();
+    
+    $userId = $this->pdo->lastInsertId();
+    
+    if (session_status() === PHP_SESSION_NONE) {
+      session_start();
+    }
     $_SESSION['user'] = $nom;
+    $_SESSION['user_id'] = $userId;
+    
+    return $userId;
   }
 
   public function findByName($nom) {

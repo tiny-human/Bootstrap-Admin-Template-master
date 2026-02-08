@@ -1,3 +1,38 @@
+<?php
+// Vérifier la session
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Vérifier si l'utilisateur est connecté
+if (!isset($_SESSION['user_id'])) {
+    header('Location: /');
+    exit;
+}
+
+$currentUser = $currentUser ?? ($_SESSION['user'] ?? 'Utilisateur');
+$currentUserId = $currentUserId ?? ($_SESSION['user_id'] ?? 0);
+$users = $users ?? [];
+$conversationMap = $conversationMap ?? [];
+$selectedUserId = $selectedUserId ?? (isset($_GET['user_id']) ? (int)$_GET['user_id'] : 0);
+$selectedUser = $selectedUser ?? null;
+$messages = $messages ?? [];
+
+// Helpers
+function formatMessageTime($datetime) {
+    if (empty($datetime)) return '';
+    $ts = strtotime($datetime);
+    if ($ts === false) return '';
+    $diff = time() - $ts;
+    if ($diff < 60) return 'Maintenant';
+    if ($diff < 3600) return floor($diff / 60) . ' min';
+    return date('H:i', $ts);
+}
+
+function avatarUrl($name) {
+    return 'https://ui-avatars.com/api/?name=' . urlencode($name) . '&background=6366f1&color=fff&size=128';
+}
+?>
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="light">
 <head>
@@ -18,7 +53,8 @@
     
     <!-- Preload critical fonts -->
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" as="style">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">  <script type="module" crossorigin src="./assets/vendor-bootstrap-C9iorZI5.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script type="module" crossorigin src="./assets/vendor-bootstrap-C9iorZI5.js"></script>
   <script type="module" crossorigin src="./assets/vendor-charts-DGwYAWel.js"></script>
   <script type="module" crossorigin src="./assets/vendor-ui-CflGdlft.js"></script>
   <script type="module" crossorigin src="./assets/main-DwHigVru.js"></script>
@@ -130,7 +166,7 @@
                                          width="24" 
                                          height="24" 
                                          class="rounded-circle me-2">
-                                    <span class="d-none d-md-inline">John Doe</span>
+                                    <span class="d-none d-md-inline"><?= $_SESSION['user'] ?? 'Guest' ?></span>
                                     <i class="bi bi-chevron-down ms-1"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
@@ -317,24 +353,24 @@
                             <p class="text-muted mb-0">Real-time communication center</p>
                         </div>
                         <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-outline-secondary d-lg-none" @click="toggleSidebar()">
+                            <button type="button" class="btn btn-outline-secondary d-lg-none">
                                 <i class="bi bi-list me-2"></i>Conversations
                             </button>
-                            <button type="button" class="btn btn-outline-secondary" @click="markAllRead()">
+                            <button type="button" class="btn btn-outline-secondary" disabled>
                                 <i class="bi bi-check-all me-2"></i>Mark All Read
                             </button>
-                            <button type="button" class="btn btn-primary" @click="newConversation()">
+                            <button type="button" class="btn btn-primary" disabled>
                                 <i class="bi bi-plus-lg me-2"></i>New Message
                             </button>
                         </div>
                     </div>
 
                     <!-- Messages Container -->
-                    <div x-data="messagesComponent" x-init="init()" class="messages-container">
+                    <div class="messages-container">
                         <div class="messages-layout">
                             
                             <!-- Conversations Sidebar -->
-                            <div class="messages-sidebar" :class="{ 'mobile-show': sidebarVisible }">
+                            <div class="messages-sidebar">
                                 <!-- Sidebar Header -->
                                 <div class="messages-header">
                                     <h5 class="header-title mb-0">Messages</h5>
@@ -342,12 +378,10 @@
                                         <div class="search-container flex-grow-1">
                                             <input type="search" 
                                                    class="form-control" 
-                                                   placeholder="Search conversations..."
-                                                   x-model="searchQuery"
-                                                   @input="filterConversations()">
+                                                   placeholder="Search conversations..." disabled>
                                             <i class="bi bi-search search-icon"></i>
                                         </div>
-                                        <button class="btn btn-primary btn-sm" @click="newConversation()" title="New Message">
+                                        <button class="btn btn-primary btn-sm" title="New Message" disabled>
                                             <i class="bi bi-plus-lg"></i>
                                         </button>
                                     </div>
@@ -355,70 +389,74 @@
                                 
                                 <!-- Conversations List -->
                                 <div class="conversations-list">
-                                    <template x-for="conversation in filteredConversations" :key="conversation.id">
-                                        <a href="#" class="conversation-item" 
-                                           :class="{ 
-                                               'active': selectedConversation?.id === conversation.id,
-                                               'unread': conversation.unread > 0 
-                                           }"
-                                           @click.prevent="selectConversation(conversation)">
+                                    <?php
+                                    $hasConversations = false;
+                                    foreach ($users as $user):
+                                        $userId = (int)$user['id'];
+                                        if ($userId === (int)$currentUserId) continue;
+                                        $hasConversations = true;
+                                        $conv = $conversationMap[$userId] ?? null;
+                                        $lastMessage = $conv['last_message'] ?? 'Démarrer une conversation...';
+                                        $lastTime = $conv['last_message_time'] ?? null;
+                                        $unread = isset($conv['unread_count']) ? (int)$conv['unread_count'] : 0;
+                                        $isActive = $selectedUserId === $userId;
+                                    ?>
+                                        <a href="/messages?user_id=<?= $userId ?>" class="conversation-item <?= $isActive ? 'active' : '' ?> <?= $unread > 0 ? 'unread' : '' ?>">
                                             <div class="conversation-avatar">
-                                                <img :src="conversation.avatar" 
-                                                     :alt="conversation.name"
-                                                     :class="{ 'online': conversation.online }">
-                                                <div class="online-indicator" x-show="conversation.online"></div>
+                                                <img src="<?= htmlspecialchars(avatarUrl($user['nom'])) ?>" alt="<?= htmlspecialchars($user['nom']) ?>">
+                                                <?php if ($unread > 0): ?>
+                                                    <div class="online-indicator"></div>
+                                                <?php endif; ?>
                                             </div>
                                             <div class="conversation-info">
                                                 <div class="conversation-header">
-                                                    <h6 class="conversation-name" x-text="conversation.name"></h6>
-                                                    <span class="conversation-time" x-text="conversation.lastMessageTime"></span>
+                                                    <h6 class="conversation-name"><?= htmlspecialchars($user['nom']) ?></h6>
+                                                    <span class="conversation-time"><?= htmlspecialchars(formatMessageTime($lastTime)) ?></span>
                                                 </div>
-                                                <p class="conversation-preview" x-text="conversation.lastMessage"></p>
+                                                <p class="conversation-preview"><?= htmlspecialchars($lastMessage) ?></p>
                                                 <div class="conversation-footer">
-                                                    <span class="conversation-type" x-text="conversation.type"></span>
-                                                    <span class="unread-badge" 
-                                                          x-show="conversation.unread > 0" 
-                                                          x-text="conversation.unread"></span>
+                                                    <span class="conversation-type">Direct</span>
+                                                    <?php if ($unread > 0): ?>
+                                                        <span class="unread-badge"><?= $unread ?></span>
+                                                    <?php endif; ?>
                                                 </div>
                                             </div>
                                         </a>
-                                    </template>
-                                    
-                                    <!-- Empty state for conversations -->
-                                    <div x-show="filteredConversations.length === 0" class="empty-conversations">
-                                        <i class="bi bi-chat-dots"></i>
-                                        <p>No conversations found</p>
-                                    </div>
+                                    <?php endforeach; ?>
+
+                                    <?php if (!$hasConversations): ?>
+                                        <div class="empty-conversations">
+                                            <i class="bi bi-chat-dots"></i>
+                                            <p>No conversations found</p>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
 
                             <!-- Chat Area -->
                             <div class="chat-area">
-                                <!-- Active Chat -->
-                                <div class="active-chat" x-show="selectedConversation">
+                                <?php if ($selectedUserId > 0 && $selectedUser): ?>
+                                <div class="active-chat">
                                     <!-- Chat Header -->
                                     <div class="chat-header">
                                         <div class="chat-user-info">
-                                            <button class="btn btn-link d-lg-none me-2 p-0" @click="sidebarVisible = !sidebarVisible">
+                                            <button class="btn btn-link d-lg-none me-2 p-0" type="button">
                                                 <i class="bi bi-arrow-left fs-5"></i>
                                             </button>
                                             <div class="chat-avatar-container">
-                                                <img :src="selectedConversation?.avatar" 
-                                                     class="chat-avatar"
-                                                     :alt="selectedConversation?.name">
-                                                <div class="online-indicator" x-show="selectedConversation?.online"></div>
+                                                <img src="<?= htmlspecialchars(avatarUrl($selectedUser['nom'])) ?>" class="chat-avatar" alt="<?= htmlspecialchars($selectedUser['nom']) ?>">
+                                                <div class="online-indicator"></div>
                                             </div>
                                             <div class="chat-details">
-                                                <h6 class="chat-name" x-text="selectedConversation?.name"></h6>
-                                                <p class="chat-status" x-show="selectedConversation?.online">● Online</p>
-                                                <p class="chat-status" x-show="!selectedConversation?.online" x-text="`Last seen ${selectedConversation?.lastSeen}`"></p>
+                                                <h6 class="chat-name"><?= htmlspecialchars($selectedUser['nom']) ?></h6>
+                                                <p class="chat-status">● Online</p>
                                             </div>
                                         </div>
                                         <div class="chat-actions">
-                                            <button class="btn" @click="videoCall()" title="Video Call">
+                                            <button class="btn" title="Video Call" disabled>
                                                 <i class="bi bi-camera-video"></i>
                                             </button>
-                                            <button class="btn" @click="voiceCall()" title="Voice Call">
+                                            <button class="btn" title="Voice Call" disabled>
                                                 <i class="bi bi-telephone"></i>
                                             </button>
                                             <div class="dropdown">
@@ -426,14 +464,14 @@
                                                     <i class="bi bi-three-dots-vertical"></i>
                                                 </button>
                                                 <ul class="dropdown-menu dropdown-menu-end">
-                                                    <li><a class="dropdown-item" href="#" @click.prevent="muteConversation()">
+                                                    <li><a class="dropdown-item" href="#">
                                                         <i class="bi bi-bell-slash me-2"></i>Mute notifications
                                                     </a></li>
-                                                    <li><a class="dropdown-item" href="#" @click.prevent="archiveConversation()">
+                                                    <li><a class="dropdown-item" href="#">
                                                         <i class="bi bi-archive me-2"></i>Archive chat
                                                     </a></li>
                                                     <li><hr class="dropdown-divider"></li>
-                                                    <li><a class="dropdown-item text-danger" href="#" @click.prevent="deleteConversation()">
+                                                    <li><a class="dropdown-item text-danger" href="#">
                                                         <i class="bi bi-trash me-2"></i>Delete chat
                                                     </a></li>
                                                 </ul>
@@ -450,49 +488,44 @@
                                         
                                         <!-- Messages -->
                                         <div class="message-group">
-                                            <template x-for="message in currentMessages" :key="message.id">
-                                                <div class="message" :class="{ 'own-message': message.sent }">
-                                                    <img x-show="!message.sent" 
-                                                         :src="selectedConversation?.avatar" 
-                                                         class="message-avatar" 
-                                                         :alt="selectedConversation?.name">
-                                                    <div class="message-bubble">
-                                                        <div class="message-content">
-                                                            <p x-text="message.text"></p>
-                                                        </div>
-                                                        <div class="message-info">
-                                                            <span class="message-time" x-text="message.time"></span>
-                                                            <span x-show="message.sent" class="message-status">
-                                                                <i class="bi bi-check-all" x-show="message.read"></i>
-                                                                <i class="bi bi-check" x-show="!message.read"></i>
-                                                            </span>
+                                            <?php if (empty($messages)): ?>
+                                                <div class="text-muted">Aucun message pour le moment.</div>
+                                            <?php else: ?>
+                                                <?php foreach ($messages as $msg):
+                                                    $isOwn = ((int)$msg['sender_id'] === (int)$currentUserId);
+                                                ?>
+                                                    <div class="message <?= $isOwn ? 'own-message' : '' ?>">
+                                                        <?php if (!$isOwn): ?>
+                                                            <img src="<?= htmlspecialchars(avatarUrl($selectedUser['nom'])) ?>" class="message-avatar" alt="<?= htmlspecialchars($selectedUser['nom']) ?>">
+                                                        <?php endif; ?>
+                                                        <div class="message-bubble">
+                                                            <div class="message-content">
+                                                                <p><?= htmlspecialchars($msg['content']) ?></p>
+                                                            </div>
+                                                            <div class="message-info">
+                                                                <span class="message-time"><?= htmlspecialchars(formatMessageTime($msg['created_at'])) ?></span>
+                                                                <?php if ($isOwn): ?>
+                                                                    <span class="message-status">
+                                                                        <?php if (!empty($msg['is_read'])): ?>
+                                                                            <i class="bi bi-check-all"></i>
+                                                                        <?php else: ?>
+                                                                            <i class="bi bi-check"></i>
+                                                                        <?php endif; ?>
+                                                                    </span>
+                                                                <?php endif; ?>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </template>
-                                        </div>
-                                        
-                                        <!-- Typing Indicator -->
-                                        <div class="typing-indicator" x-show="isTyping">
-                                            <img :src="selectedConversation?.avatar" 
-                                                 class="typing-avatar" 
-                                                 :alt="selectedConversation?.name">
-                                            <div class="typing-content">
-                                                <div class="typing-dots">
-                                                    <div class="dot"></div>
-                                                    <div class="dot"></div>
-                                                    <div class="dot"></div>
-                                                </div>
-                                                <span class="typing-text">typing...</span>
-                                            </div>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
 
                                     <!-- Message Input -->
-                                    <div class="chat-input">
+                                    <form class="chat-input" method="post" action="/messages/send">
                                         <div class="input-container">
                                             <div class="input-actions">
-                                                <button class="btn" @click="toggleAttachment()" title="Attach file">
+                                                <button class="btn" type="button" title="Attach file" disabled>
                                                     <i class="bi bi-paperclip"></i>
                                                 </button>
                                             </div>
@@ -500,43 +533,30 @@
                                                 <textarea class="form-control" 
                                                           placeholder="Type a message..." 
                                                           rows="1"
-                                                          x-model="newMessage"
-                                                          @keydown.enter.prevent="sendMessage()"
-                                                          @input="handleTyping(); autoResize($event)"
-                                                          style="resize: none;"></textarea>
+                                                          name="content"
+                                                          style="resize: none;" required></textarea>
+                                                <input type="hidden" name="receiver_id" value="<?= (int)$selectedUserId ?>">
                                             </div>
                                             <div class="input-actions">
-                                                <button class="btn" @click="toggleEmojiPicker()" title="Add emoji">
+                                                <button class="btn" type="button" title="Add emoji" disabled>
                                                     <i class="bi bi-emoji-smile"></i>
                                                 </button>
-                                                <button class="btn btn-primary" @click="sendMessage()" :disabled="!newMessage.trim()" title="Send message">
+                                                <button class="btn btn-primary" type="submit" title="Send message">
                                                     <i class="bi bi-send"></i>
                                                 </button>
                                             </div>
                                         </div>
-                                        
-                                        <!-- Emoji Picker -->
-                                        <div class="emoji-picker" x-show="showEmojiPicker" x-transition>
-                                            <div class="emoji-grid">
-                                                <template x-for="emoji in emojis" :key="emoji">
-                                                    <button class="emoji-btn" @click="addEmoji(emoji)" x-text="emoji"></button>
-                                                </template>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    </form>
                                 </div>
-
-                                <!-- Empty Chat State -->
-                                <div class="empty-chat" x-show="!selectedConversation">
+                                <?php else: ?>
+                                <div class="empty-chat">
                                     <div class="empty-icon">
                                         <i class="bi bi-chat-dots"></i>
                                     </div>
                                     <h5 class="empty-text">Select a conversation to start messaging</h5>
-                                    <p class="text-muted mb-4">Choose from your existing conversations or start a new one</p>
-                                    <button class="btn btn-primary" @click="newConversation()">
-                                        <i class="bi bi-plus-lg me-2"></i>Start New Conversation
-                                    </button>
+                                    <p class="text-muted mb-4">Choose a user on the left to begin.</p>
                                 </div>
+                                <?php endif; ?>
                             </div>
 
                         </div>
@@ -561,7 +581,6 @@
 
         </div> <!-- /.admin-wrapper -->
     </div>
-
     <!-- Page-specific Component -->
 
     <!-- Main App Script -->

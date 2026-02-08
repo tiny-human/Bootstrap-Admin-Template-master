@@ -18,15 +18,13 @@ class AuthController {
     header('Content-Type: application/json; charset=utf-8');
 
     try {
-      $pdo  = Flight::db();
-      $repo = new UserRepository($pdo);
       $req = Flight::request();
 
       $input = [
         'nom' => $req->data->nom,
       ];
 
-      $res = Validator::validateRegister($input, $repo);
+      $res = Validator::validateRegister($input);
 
       Flight::json([
         'ok' => $res['ok'],

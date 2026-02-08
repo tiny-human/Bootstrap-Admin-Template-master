@@ -5,6 +5,12 @@
  * required services, plugins, connections, etc. are loaded and ready to go
  * for every request made to the application.
  */
+
+// Démarrer la session en premier
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 $ds = DIRECTORY_SEPARATOR;
 require(__DIR__ . $ds . '..' . $ds . '..' . $ds . 'vendor' . $ds . 'autoload.php');
 if(file_exists(__DIR__. $ds . 'config.php') === false) {
