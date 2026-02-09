@@ -31,14 +31,15 @@ class AuthController {
         'errors' => $res['errors'],
         'values' => $res['values'],
       ]);
-    } catch (\Throwable $e) {
-      http_response_code(500);
-      Flight::json([
-        'ok' => false,
-        'errors' => ['_global' => 'Erreur serveur lors de la validation.'],
-        'values' => []
-      ]);
-    }
+    }catch (\Throwable $e) {
+        http_response_code(500);
+        $resp = [
+          'ok' => false,
+          'errors' => ['_global' => 'Erreur serveur lors de la validation.'],
+          'values' => []
+        ];
+        Flight::json($resp);
+      }
   }
 
   public static function postRegister() {

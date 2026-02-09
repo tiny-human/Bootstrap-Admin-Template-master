@@ -34,14 +34,13 @@ class UserRepository {
       return $this->create($nom);
     }
     
-    // Utilisateur existe, définir la session
     if (session_status() === PHP_SESSION_NONE) {
       session_start();
     }
     $_SESSION['user'] = $user['nom'];
-    $_SESSION['user_id'] = $user['id'];
+    $_SESSION['user_id'] = $user['id_utilisateur'];
     
-    return $user['id'];
+    return $user['id_utilisateur'];
   }
 
   public static function findAll() {

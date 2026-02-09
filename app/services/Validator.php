@@ -12,7 +12,7 @@ class Validator {
       'nom' => trim((string)($input['nom'] ?? '')),
     ];
 
-    if (mb_strlen($values['nom']) < 2) $errors['nom'] = "Le nom doit contenir au moins 2 caractères.";
+    if (strlen($values['nom']) < 2) $errors['nom'] = "Le nom doit contenir au moins 2 caractères.";
 
     $ok = true;
     foreach ($errors as $m) { if ($m !== '') { $ok = false; break; } }

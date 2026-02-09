@@ -6,6 +6,7 @@
  * for every request made to the application.
  */
 
+ini_set('display_errors', 1); error_reporting(E_ALL);
 // Démarrer la session en premier
 if (session_status() === PHP_SESSION_NONE) {
     session_start();

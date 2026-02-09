@@ -84,6 +84,12 @@ $router ->post('/api/validate/register', function(){
 });
 
 
+$router ->get('/logout' , function(){
+    session_destroy();
+    Flight::redirect('/');
+});
+
+
 
 // Flight::route('POST /register', ['AuthController', 'postRegister']);
 //Flight::route('POST /api/validate/register', ['AuthController', 'validateRegisterAjax']);
