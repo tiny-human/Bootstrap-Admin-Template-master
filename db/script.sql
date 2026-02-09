@@ -1,7 +1,7 @@
 
 drop database boot;
-CREATE DATABASE IF NOT EXISTS boot;
-USE boot;
+CREATE DATABASE IF NOT EXISTS template;
+USE template;
 
 CREATE TABLE IF NOT EXISTS user(
     id_utilisateur INT PRIMARY KEY AUTO_INCREMENT,
