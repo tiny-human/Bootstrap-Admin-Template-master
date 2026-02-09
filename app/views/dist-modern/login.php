@@ -84,7 +84,6 @@
                         </div>
                     </form>
                         <script src="/js/validation-ajax.js" defer></script>
-
                 </div>
             </div>
         </div>

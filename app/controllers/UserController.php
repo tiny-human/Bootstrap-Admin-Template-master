@@ -26,7 +26,6 @@ class UserController
         $input=[
             'nom' => $req->data->nom
         ];
-
         $nom = $input['nom'];
 
         $res = Validator::validateRegister($input, $repo);
